@@ -60,6 +60,9 @@ namespace server {
 
         void start() {
             mRoom.join(shared_from_this());
+            while(true){
+                doReadHeader();
+            }
         }
 
         void deliver(const Message &msg) {
@@ -88,7 +91,6 @@ namespace server {
 
             if (ec != -1) {
                 mRoom.deliver(mId, mReadMessage);
-                doReadHeader();
             } else {
                 mRoom.leave(shared_from_this());
             }
@@ -112,13 +114,17 @@ namespace server {
     class ServerPart {
     public:
         ServerPart(int connectionSocket)
-                : mConnectionSocket(connectionSocket), mRoom(), mThreads(), mIdCounter(0) {
+                : mConnectionSocket(connectionSocket), mRoom(), mThreads(), mIdCounter(0)
+        {}
+
+        void start(){
             int ret = listen(mConnectionSocket, 20);
             if (ret == -1) {
                 exit(EXIT_FAILURE);
             }
-
-            doAccept();
+            while(true){
+                doAccept();
+            }
         }
 
     private:
@@ -133,7 +139,6 @@ namespace server {
                         std::thread(&ServerPart::makeSession, this, dataSocket, std::ref(mRoom), mIdCounter));
                 ++mIdCounter;
             }
-            doAccept();
         }
 
         int mConnectionSocket;

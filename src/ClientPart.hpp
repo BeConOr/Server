@@ -14,6 +14,7 @@
 #include "../include/Protocol.hpp"
 
 #include "Message.hpp"
+#include "MessageMaker.hpp"
 
 namespace server {
     class ClientPart {
@@ -51,23 +52,27 @@ namespace server {
             ::close(mSocket);
         }
 
-        void startReadAsync() {
+        void start() {
             std::thread th(&ClientPart::doReadHeader, this);
             th.detach();
+            while(true) {
+                std::string message("");
+                std::cin >> message;
+                write(makeMessage(message));
+            }
         }
 
     private:
 
         void doReadHeader() {
-            int ec = ::read(mSocket, mReadMessage.data(), Message::headerSize);
-            if ((ec != -1) && mReadMessage.decode_header())
-            {
-                doReadBody();
-            }
-            else
-            {
-                std::string error = "Failed to decode message";
-                closeWithError(error);
+            while(true) {
+                int ec = ::read(mSocket, mReadMessage.data(), Message::headerSize);
+                if ((ec != -1) && mReadMessage.decode_header()) {
+                    doReadBody();
+                } else {
+                    std::string error = "Failed to decode message";
+                    closeWithError(error);
+                }
             }
         }
 
@@ -79,7 +84,6 @@ namespace server {
                 //input_callback_(mReadMessage);
                 std::cout << mReadMessage.data() << std::endl;
 
-                doReadHeader();
             }
             else
             {

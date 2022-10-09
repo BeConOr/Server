@@ -17,15 +17,16 @@ int main() {
     memset(&name, 0, sizeof(name));
 
     name.sun_family = AF_UNIX;
-    strncpy(name.sun_path, server::gSocketName, sizeof(name.sun_path) - 1);
+    strncpy(name.sun_path, "", sizeof(name.sun_path) - 1);
 
-    int ret = bind(connectionSocket, (const struct sockaddr *) &name, sizeof(name));
+    int ret = bind(connectionSocket, (const struct sockaddr *) &name, sizeof(struct sockaddr_un));
     if (ret == -1) {
         perror("bind");
         exit(EXIT_FAILURE);
     }
 
     server::ServerPart server(connectionSocket);
+    server.start();
 
     return 0;
 }
