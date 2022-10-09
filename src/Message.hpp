@@ -85,6 +85,10 @@ public:
         std::memcpy(mData, body_length, bodyLengthSize);
     }
 
+    void clearData(){
+        std::memset(mData, 0, headerSize + bodyMaxSize);
+    }
+
 private:
     char mData[headerSize + bodyMaxSize];
     std::size_t mBodySize;

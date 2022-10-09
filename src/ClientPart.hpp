@@ -67,6 +67,7 @@ namespace server {
 
         void doReadHeader() {
             while(true) {
+                mReadMessage.clearData();
                 int ec = ::read(mSocket, mReadMessage.data(), Message::headerSize);
                 if ((ec != -1) && mReadMessage.decode_header()) {
                     doReadBody();

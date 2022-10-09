@@ -11,6 +11,7 @@
 #include <set>
 #include <algorithm>
 #include <thread>
+#include <regex>
 
 namespace server {
 
@@ -77,6 +78,7 @@ namespace server {
     private:
         void doReadHeader() {
             auto self(shared_from_this());
+            mReadMessage.clearData();
             int ec = read(mSocket, mReadMessage.data(), Message::headerSize);
             if ((ec != -1)) {
                 if(mReadMessage.decode_header()) doReadBody();
@@ -90,6 +92,35 @@ namespace server {
             int ec = read(mSocket, mReadMessage.body(), mReadMessage.body_length());
 
             if (ec != -1) {
+                std::string command(mReadMessage.body());
+                if(command.find(commands::gStartMeasure) == 0){
+                    std::regex rangeWords("(channel\\d)");
+                    auto words_begin =
+                            std::sregex_iterator(command.begin(), command.end(), rangeWords);
+                    auto words_end = std::sregex_iterator();
+
+                    std::cout << "Found "
+                              << std::distance(words_begin, words_end)
+                              << " words\n";
+
+                    const int N = 6;
+                    std::cout << "Words longer than " << N << " characters:\n";
+                    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+                        std::smatch match = *i;
+                        std::string match_str = match.str();
+                        if (match_str.size() > N) {
+                            std::cout << "  " << match_str << '\n';
+                        }
+                    }
+                }else if(command.find(commands::gSetRange) == 0){
+
+                }else if(command.find(commands::gStopMeasure) == 0){
+
+                }else if(command.find(commands::gGetStatus) == 0){
+
+                }else if(command.find(commands::gGetResult) == 0){
+
+                }
                 mRoom.deliver(mId, mReadMessage);
                 std::cout << mReadMessage.body() << std::endl;
             } else {
