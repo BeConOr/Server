@@ -3,4 +3,4 @@ project(server)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(server main.cpp include/Protocol.hpp src/ServerPart.hpp src/Message.hpp src/MessageMaker.hpp src/MessageMaker.cpp)
+add_executable(server main.cpp include/Protocol.hpp src/ServerPart.hpp src/Message.hpp src/MessageMaker.hpp src/MessageMaker.cpp src/ClientPart.hpp)
