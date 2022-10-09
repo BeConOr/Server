@@ -1,7 +1,10 @@
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "src/ServerPart.hpp"
 
@@ -17,6 +20,15 @@ int main() {
     memset(&name, 0, sizeof(name));
 
     name.sun_family = AF_UNIX;
+
+    struct stat statistic;
+
+    int isExist = stat(server::gSocketName, &statistic);
+
+    if(isExist == 0){
+        remove(server::gSocketName);
+    }
+
     strncpy(name.sun_path, server::gSocketName, sizeof(name.sun_path) - 1);
 
     int ret = bind(connectionSocket, (const struct sockaddr *) &name, sizeof(name));
