@@ -82,7 +82,7 @@ namespace server {
             if (ec != -1)
             {
                 //input_callback_(mReadMessage);
-                std::cout << mReadMessage.data() << std::endl;
+                std::cout << mReadMessage.body() << std::endl;
 
             }
             else

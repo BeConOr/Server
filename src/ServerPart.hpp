@@ -91,7 +91,7 @@ namespace server {
 
             if (ec != -1) {
                 mRoom.deliver(mId, mReadMessage);
-                std::cout << mReadMessage.data() << std::endl;
+                std::cout << mReadMessage.body() << std::endl;
             } else {
                 mRoom.leave(shared_from_this());
             }
