@@ -78,8 +78,8 @@ namespace server {
         void doReadHeader() {
             auto self(shared_from_this());
             int ec = read(mSocket, mReadMessage.data(), Message::headerSize);
-            if (ec != -1) {
-                doReadBody();
+            if ((ec != -1)) {
+                if(mReadMessage.decode_header()) doReadBody();
             } else {
                 mRoom.leave(shared_from_this());
             }

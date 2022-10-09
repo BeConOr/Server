@@ -10,7 +10,7 @@
 
 int main() {
     struct sockaddr_un name;
-    int connectionSocket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    int connectionSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (connectionSocket == -1) {
         perror("socket");

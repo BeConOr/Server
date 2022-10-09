@@ -58,6 +58,7 @@ namespace server {
             while(true) {
                 std::string message("");
                 std::cin >> message;
+                if(message == gEnd) break;
                 write(makeMessage(message));
             }
         }

@@ -12,4 +12,5 @@ namespace server{
 
     constexpr auto gChannelNumber = 9;
     constexpr auto gSocketName = "/tmp/9Lq7BNBnBycd6nxy.socket";
+    constexpr auto gEnd = "END";
 }// namespace server
