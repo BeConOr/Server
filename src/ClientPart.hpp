@@ -29,9 +29,9 @@ namespace server {
 
         bool connect() {
             mAddr.sun_family = AF_UNIX;
-            strncpy(mAddr.sun_path, gSocketName, sizeof(mAddr.sun_path) - 1);
+            strncpy(mAddr.sun_path, "", sizeof(mAddr.sun_path) - 1);
 
-            int ret = ::connect(mSocket, (const struct sockaddr *) &mAddr, sizeof(mAddr));
+            int ret = ::connect(mSocket, (const struct sockaddr *) &mAddr, sizeof(struct sockaddr_un));
             if (ret == -1) {
                 exit(EXIT_FAILURE);
             }
