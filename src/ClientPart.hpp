@@ -17,16 +17,20 @@
 #include "MessageMaker.hpp"
 
 namespace server {
+    /**
+     * @brief Class to connect with server and send command.
+     * */
     class ClientPart {
     public:
-        using input_callback_type = std::function<void(Message)>;
-        using interruption_callback_type = std::function<void(std::string)>;
 
         ClientPart(int socket)
                 : mSocket(socket){
             memset(&mAddr, 0, sizeof(mAddr));
         }
 
+        /**
+         * @brief Function to connect with server.
+         * */
         bool connect() {
             mAddr.sun_family = AF_UNIX;
             strncpy(mAddr.sun_path, gSocketName, sizeof(mAddr.sun_path) - 1);
@@ -37,6 +41,9 @@ namespace server {
             }
         }
 
+        /**
+         * @brief Function to sent message to server.
+         * */
         bool write(const Message & msg) {
             int ret = ::write(mSocket, msg.data(), msg.length() + 1);
 
@@ -48,10 +55,16 @@ namespace server {
             return true;
         }
 
+        /**
+         * @brief Function to close connection.
+         * */
         void close() {
             ::close(mSocket);
         }
 
+        /**
+         * @brief Function to start client.
+         * */
         void start() {
             std::thread th(&ClientPart::doReadHeader, this);
             th.detach();
@@ -65,6 +78,9 @@ namespace server {
 
     private:
 
+        /**
+         * @brief Function to read headers of message from server (message length etc.)
+         * */
         void doReadHeader() {
             while(true) {
                 mReadMessage.clearData();
@@ -78,12 +94,14 @@ namespace server {
             }
         }
 
+        /**
+         * @brief Function to read body of message.
+         * */
         void doReadBody() {
             int ec = read(mSocket, mReadMessage.body(), mReadMessage.body_length());
 
             if (ec != -1)
             {
-                //input_callback_(mReadMessage);
                 std::cout << mReadMessage.body() << std::endl;
 
             }
@@ -94,19 +112,19 @@ namespace server {
             }
         }
 
+        /**
+         * @brief Function to close client when error occurs
+         * */
         void closeWithError(std::string error) {
             close();
 
-            //interruption_callback_(error);
             std::cout << "ERROR: " << error << std::endl;
+            exit(EXIT_FAILURE);
         }
 
     private:
         int mSocket;
         struct sockaddr_un mAddr;
-
-//        input_callback_type input_callback_;
-//        interruption_callback_type interruption_callback_;
 
         Message mReadMessage;
     };

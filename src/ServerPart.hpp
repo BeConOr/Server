@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include "Message.hpp"
+#include "MessageMaker.hpp"
 #include <memory>
 #include <vector>
 #include <set>
@@ -15,6 +16,9 @@
 
 namespace server {
 
+    /**
+     * @brief Interface for participants that connects with server
+     * */
     class Participant {
     public:
         virtual ~Participant() = default;
@@ -26,16 +30,31 @@ namespace server {
 
     using ParticipantPtr = std::shared_ptr<Participant>;
 
+
+    /**
+     * @brief Class that stores connections information
+     * */
     class Room {
     public:
+        /**
+         * @brief Add a new participant to server
+         * */
         void join(const ParticipantPtr &participant) {
             mParticipants.insert(participant);
         }
 
+        /**
+         * @brief Remove a participant from server
+         * */
         void leave(const ParticipantPtr &participant) {
             mParticipants.erase(participant);
         }
 
+        /**
+         * @brief Function to send message to participant
+         * @param id - participant's id who you want to send message to
+         * @param message - message to send
+         * */
         void deliver(const std::size_t &id, const Message &message) {
             auto participantIter =
                     std::find_if(mParticipants.begin(),
@@ -52,6 +71,10 @@ namespace server {
         std::set<ParticipantPtr> mParticipants;
     };
 
+
+    /**
+     * @brief Class to manage current session.
+     * */
     class Session
             : public Participant
             , public std::enable_shared_from_this<Session> {
@@ -59,6 +82,9 @@ namespace server {
         Session(int socket, Room &room, std::size_t userId)
                 : mSocket(socket), mRoom(room), mId(userId) {}
 
+        /**
+         * @brief Function to start session
+         * */
         void start() {
             mRoom.join(shared_from_this());
             while(true){
@@ -66,11 +92,17 @@ namespace server {
             }
         }
 
+        /**
+         * @brief Function to send message to current participant
+         * */
         void deliver(const Message &msg) {
             doWrite(msg);
         }
 
 
+        /**
+         * @brief Function to get id of current session
+         * */
         std::size_t getId() const override {
             return mId;
         }
@@ -94,34 +126,65 @@ namespace server {
             if (ec != -1) {
                 std::string command(mReadMessage.body());
                 if(command.find(commands::gStartMeasure) == 0){
-                    std::regex rangeWords("(channel\\d)");
-                    auto words_begin =
-                            std::sregex_iterator(command.begin(), command.end(), rangeWords);
-                    auto words_end = std::sregex_iterator();
-
-                    std::cout << "Found "
-                              << std::distance(words_begin, words_end)
-                              << " words\n";
-
-                    const int N = 6;
-                    std::cout << "Words longer than " << N << " characters:\n";
-                    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-                        std::smatch match = *i;
-                        std::string match_str = match.str();
-                        if (match_str.size() > N) {
-                            std::cout << "  " << match_str << '\n';
-                        }
+                    std::vector<int> channelNumbers(findChannels(command));
+                    for(auto number : channelNumbers){
+                        std::cout << number << std::endl;
+                    }
+                    if(!channelNumbers.empty()) {
+                        mRoom.deliver(mId, makeMessage("ok"));
+                    }else{
+                        mRoom.deliver(mId, makeMessage("fail"));
                     }
                 }else if(command.find(commands::gSetRange) == 0){
-
+                    std::regex rangeWords("channel(\\d+), range(\\d+)");
+                    std::smatch sm;
+                    std::string result("");
+                    if(std::regex_search(command, sm, rangeWords)) {
+                        for (auto number : sm) {
+                            std::cout << number << '\n';
+                        }
+                        if(std::stoi(sm[2]) < 4) {
+                            result.append("ok, ");
+                        }else{
+                            result.append("fail, ");
+                        }
+                        result.append("range");
+                        result.append(sm[2]);
+                    }else{
+                        result.append("fail");
+                    }
+                    mRoom.deliver(mId, makeMessage(result));
                 }else if(command.find(commands::gStopMeasure) == 0){
-
+                    std::vector<int> channelNumbers(findChannels(command));
+                    for(auto number : channelNumbers){
+                        std::cout << number << std::endl;
+                    }
+                    if(!channelNumbers.empty()) {
+                        mRoom.deliver(mId, makeMessage("ok"));
+                    }else{
+                        mRoom.deliver(mId, makeMessage("fail"));
+                    }
                 }else if(command.find(commands::gGetStatus) == 0){
-
+                    std::vector<int> channelNumbers(findChannels(command));
+                    for(auto number : channelNumbers){
+                        std::cout << number << std::endl;
+                    }
+                    if(!channelNumbers.empty()) {
+                        mRoom.deliver(mId, makeMessage("ok"));
+                    }else{
+                        mRoom.deliver(mId, makeMessage("fail"));
+                    }
                 }else if(command.find(commands::gGetResult) == 0){
-
+                    std::vector<int> channelNumbers(findChannels(command));
+                    for(auto number : channelNumbers){
+                        std::cout << number << std::endl;
+                    }
+                    if(!channelNumbers.empty()) {
+                        mRoom.deliver(mId, makeMessage("ok"));
+                    }else{
+                        mRoom.deliver(mId, makeMessage("fail"));
+                    }
                 }
-                mRoom.deliver(mId, mReadMessage);
                 std::cout << mReadMessage.body() << std::endl;
             } else {
                 mRoom.leave(shared_from_this());
@@ -136,6 +199,19 @@ namespace server {
             }
         }
 
+        std::vector<int> findChannels(std::string & command){
+            std::vector<int> channelsNumber = std::vector<int>();
+            std::regex rangeWords("channel(\\d+)");
+            auto words_begin =
+                    std::sregex_iterator(command.begin(), command.end(), rangeWords);
+            auto words_end = std::sregex_iterator();
+            for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+                std::smatch match = *i;
+                channelsNumber.push_back(std::stoi(match[1]));
+            }
+            return channelsNumber;
+        }
+
 
         int mSocket;
         Room mRoom;
@@ -143,12 +219,19 @@ namespace server {
         const std::size_t mId;
     };
 
+
+    /**
+     * @brief Class that manage server
+     * */
     class ServerPart {
     public:
         ServerPart(int connectionSocket)
                 : mConnectionSocket(connectionSocket), mRoom(), mThreads(), mIdCounter(0)
         {}
 
+        /**
+         * @brief Function to start server
+         * */
         void start(){
             int ret = listen(mConnectionSocket, 20);
             if (ret == -1) {
@@ -160,10 +243,19 @@ namespace server {
         }
 
     private:
+        /**
+         * @brief Function to create a thread for new connection
+         * @param socket - socket of new connection
+         * @param room - room that store data of server
+         * @param id - id of new connection
+         * */
         void makeSession(int socket, Room &room, std::size_t id) {
             std::make_shared<Session>(socket, room, id)->start();
         }
 
+        /**
+         * @brief Function to create a new connection
+         * */
         void doAccept() {
             int dataSocket = accept(mConnectionSocket, NULL, NULL);
             if (dataSocket != -1) {
