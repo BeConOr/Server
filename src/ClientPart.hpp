@@ -56,8 +56,8 @@ namespace server {
             std::thread th(&ClientPart::doReadHeader, this);
             th.detach();
             while(true) {
-                std::string message("");
-                std::cin >> message;
+                std::string message;
+                std::getline(std::cin, message);
                 if(message == gEnd) break;
                 write(makeMessage(message));
             }
